@@ -8,45 +8,22 @@
 #define STAPSK  "Oak_Shore_Dr"
 #endif
 
+WiFiClient espClient;
+PubSubClient client(espClient); // Initializes the espClient.
+
+// ##### BEGIN VARIABLES #####
+
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 const uint16_t port = 17;
 const int button = 0;
 String clientId = "Tip-up-01";
 int s;
-
 const char* mqtt_server = "test.mosquitto.org";     //MQTT broker address
-WiFiClient espClient;
-PubSubClient client(espClient);                     // Initializes the espClient.
 
-void setup() {
-  Serial.begin(115200);
-  pinMode(button, INPUT_PULLUP);
-  // We start by connecting to a WiFi network
+// ##### END VARIABLES #####
 
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
 
-  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
-     would try to act as both a client and an access-point and could cause
-     network-issues with your other WiFi-devices on your WiFi-network. */
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  
-  client.setServer(mqtt_server, 1883);
-}
 
 // ##### BEGIN FUNCTIONS #####
 
@@ -73,8 +50,10 @@ int sendMessage(char* status) //This function will send msg to MQTT broker
   return 0;
 }
 
-void reconnect() {
-  // Loop until we're reconnected
+void reconnect() 
+{
+  client.setServer(mqtt_server, 1883);
+  
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
@@ -96,7 +75,46 @@ void reconnect() {
     }
   }
 }
+
+void connectWifi()
+{
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
+     would try to act as both a client and an access-point and could cause
+     network-issues with your other WiFi-devices on your WiFi-network. */
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void configPins()
+{
+   pinMode(button, INPUT_PULLUP);
+}
+
+void configSerial()
+{
+  Serial.begin(115200);
+}
 // ##### END FUNCTIONS #####
+
+void setup() 
+{
+  configSerial();
+  configPins();
+  connectWifi();
+}
 
 // ##### BEGIN PROGRAM #####
 void loop() 
@@ -119,7 +137,7 @@ void loop()
   else if (x == 1 && s != 1) //Is the status 1 and was the last run 1?
   {
     s = 1;
-    msg = "Tip-up 1 Flag";
+    msg = " Flag";
     sendMessage(msg);
   }
   
